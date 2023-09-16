@@ -5,6 +5,7 @@ import com.cafe.management.system.constants.CafeContest;
 import com.cafe.management.system.model.entities.User;
 import com.cafe.management.system.model.request.UserDto;
 import com.cafe.management.system.model.response.BasicResponse;
+import com.cafe.management.system.model.response.LoginResponse;
 import com.cafe.management.system.repository.UserRepository;
 import com.cafe.management.system.service.UserService;
 import com.cafe.management.system.utils.CafeUtils;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,22 +60,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<Object> logIn(@Validated UserDto userDto){
-        try{
 
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    userDto.getEmail(), userDto.getPassword()));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            this.doAuthenticate(userDto.getEmail(),userDto.getPassword());
 
             String token = jwtTokenService.generateToken(userDto.getEmail());
 
-            return CafeUtils.getResponseEntity(new BasicResponse<>(userDto,"Successfully Login.-"+token ,HttpStatus.OK.value()), HttpStatus.OK);
+            return CafeUtils.getResponseEntity(new LoginResponse<>("Logged In Successfully." , token ,HttpStatus.OK.value()), HttpStatus.OK);
 
-        } catch (Exception ex){
-            ex.printStackTrace();
-            log.error("Exception occured");
+    }
+
+    private void doAuthenticate(String email, String password) {
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    email  , password));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(" Invalid Username or Password  !!");
         }
-        return CafeUtils.getResponseEntity(CafeContest.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
     }
 
 

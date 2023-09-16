@@ -36,13 +36,7 @@ public class UserControllerImpl implements UserController {
 
     @Override
     public ResponseEntity<Object> logIn(UserDto userDto){
-        try{
             return userService.logIn(userDto);
-        } catch (Exception ex){
-            log.error("Exception Occurred in {}",ex.getMessage());
-        }
-        System.out.println("in user impl");
-        return CafeUtils.getResponseEntity(CafeContest.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
