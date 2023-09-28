@@ -43,4 +43,14 @@ public class UserControllerImpl implements UserController {
     public String profile(){
         return "here is your profile";
     }
+
+    @Override
+    public ResponseEntity<Object> getAllUsers(int pageNo,int pageSize,String sortBy,String sortDir){
+            return userService.getAllUsers(pageNo,pageSize,sortBy,sortDir);
+    }
+
+    @Override
+    public ResponseEntity<Object> searchByName(String name){
+        return userService.searchByName(name);
+    }
 }

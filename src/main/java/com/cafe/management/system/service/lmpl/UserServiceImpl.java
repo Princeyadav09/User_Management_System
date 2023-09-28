@@ -6,12 +6,17 @@ import com.cafe.management.system.model.entities.User;
 import com.cafe.management.system.model.request.UserDto;
 import com.cafe.management.system.model.response.BasicResponse;
 import com.cafe.management.system.model.response.LoginResponse;
+import com.cafe.management.system.model.response.UsersResponse;
 import com.cafe.management.system.repository.UserRepository;
 import com.cafe.management.system.service.UserService;
 import com.cafe.management.system.utils.CafeUtils;
 import com.cafe.management.system.utils.Mapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +27,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -67,6 +74,50 @@ public class UserServiceImpl implements UserService {
 
             return CafeUtils.getResponseEntity(new LoginResponse<>("Logged In Successfully." , token ,HttpStatus.OK.value()), HttpStatus.OK);
 
+    }
+
+    @Override
+    public  ResponseEntity<Object> getAllUsers(int pageNo,int pageSize,String sortBy,String sortDir){
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        // create Pageable instance
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Page<User> users = userRepository.findAll(pageable);
+
+        // get content for page object
+        List<User> listOfUsers = users.getContent();
+
+        List<User> content= listOfUsers.stream().map(user -> mapToDTO(user)).collect(Collectors.toList());
+
+        UsersResponse userResponse = new UsersResponse();
+        userResponse.setContent(content);
+        userResponse.setPageNo(users.getNumber());
+        userResponse.setPageSize(users.getSize());
+        userResponse.setTotalElements(users.getTotalElements());
+        userResponse.setTotalPages(users.getTotalPages());
+        userResponse.setLast(users.isLast());
+
+        return CafeUtils.getResponseEntity(userResponse,HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<Object> searchByName(String name){
+        List<User> users = userRepository.searchUsers(name);
+        List<User> content= users.stream().map(user -> mapToDTO(user)).collect(Collectors.toList());
+        UsersResponse userResponse = new UsersResponse();
+        userResponse.setContent(content);
+        return CafeUtils.getResponseEntity(userResponse,HttpStatus.OK);
+    }
+
+    // convert Entity into DTO
+    private User mapToDTO(User user){
+        User userDto = new User();
+        userDto.setId(user.getId());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        return userDto;
     }
 
     private void doAuthenticate(String email, String password) {

@@ -7,4 +7,8 @@ public interface UserService {
      ResponseEntity<Object> signUp(UserDto userDto);
 
      ResponseEntity<Object> logIn(UserDto userDto);
+
+     ResponseEntity<Object> getAllUsers(int pageNo,int pageSize,String sortBy,String sortDir);
+
+     ResponseEntity<Object> searchByName(String name);
 }
